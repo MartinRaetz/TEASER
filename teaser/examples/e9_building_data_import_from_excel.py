@@ -264,6 +264,143 @@ def zoning_example(data):
 
     return data
 
+def zoning_uka(data):
+    """
+    This is an example on how the rooms of a building could be aggregated to
+    zones.
+
+    In this example the UsageType has to be empty in the case that the
+    respective line does not represent another
+    room but a different orientated wall or window belonging to a room that
+    is already declared once in the excel file.
+
+    Parameters
+    ----------
+    data: pandas.dataframe
+        The data which shall be zoned
+    return data: pandas.dataframe
+        The zoning should return the imported dataset with an additional
+        column called "Zone" which inhibits the
+        information to which zone the respective room shall be part of,
+        and also a column called "UsageType_Teaser" which stores the
+        in UsageType of each row.
+        UsageType must be available in the UseConditions.json.
+    """
+    # apply values since the excel sheet is not filled with construction types
+    data["WindowConstruction"] = "UKA"
+    data["OuterWallConstruction"] = "UKA_fromStatistic"
+    data["InnerWallConstruction"] = "UKA_fromStatistic"
+    data["FloorConstruction"] = "UKA"
+    data["GroundFloorConstruction"] = "UKA_fromStatistic"
+    data["CeilingConstruction"] = "UKA"
+    data["RooftopConstruction"] = "UKA_fromStatistic"
+
+
+    # account all outer walls not adjacent to the ambient to the entity
+    # "inner wall"
+    # !right now the wall construction of the added wall is not respected,
+    # the same wall construction as regular
+    # inner wall is set
+    for index, line in data.iterrows():
+        if not pd.isna(line["WallAdjacentTo"]):
+            data.loc[index, "InnerWallArea[m²]"] = (
+                data.loc[index, "OuterWallArea[m²]"]
+                + data.loc[index, "WindowArea[m²]"]
+                + data.loc[index, "InnerWallArea[m²]"]
+            )
+            data.loc[index, "WindowOrientation[°]"] = np.NaN
+            data.loc[index, "WindowArea[m²]"] = np.NaN
+            data.loc[index, "WindowConstruction"] = np.NaN
+            data.loc[index, "OuterWallOrientation[°]"] = np.NaN
+            data.loc[index, "OuterWallArea[m²]"] = np.NaN
+            data.loc[index, "OuterWallConstruction"] = np.NaN
+
+    # make all rooms that belong to a certain room have the same room identifier
+    _list = []
+    for index, line in data.iterrows():
+        if pd.isna(line["BelongsToIdentifier"]):
+            _list.append(line["RoomIdentifier"])
+        else:
+            _list.append(line["BelongsToIdentifier"])
+    data["RoomCluster"] = _list
+
+    # check for lines in which the net area is zero, marking an second wall
+    # or window
+    # element for the respective room, and in which there is still stated a
+    # UsageType which is wrong
+    # and should be changed in the file
+    for i, row in data.iterrows():
+        if (row["NetArea[m²]"] == 0 or row["NetArea[m²]"] == np.nan) and not pd.isna(
+            row["UsageType"]
+        ):
+            warnings.warn(
+                "In line %s the net area is zero, marking an second wall or "
+                "window element for the respective room, "
+                "and in which there is still stated a UsageType which is "
+                "wrong and should be changed in the file" % i
+            )
+
+    # make all rooms of the cluster having the usage type of the main usage type
+    _groups = data.groupby(["RoomCluster"])
+    for index, cluster in _groups:
+        count = 0
+        for line in cluster.iterrows():
+            if pd.isna(line[1]["BelongsToIdentifier"]) and not pd.isna(
+                line[1]["UsageType"]
+            ):
+                main_usage = line[1]["UsageType"]
+                for i, row in data.iterrows():
+                    if row["RoomCluster"] == line[1]["RoomCluster"]:
+                        data.loc[i, "RoomClusterUsage"] = main_usage
+                count += 1
+        if count != 1:
+            warnings.warn(
+                "This cluster has more than one main usage type or none, "
+                "check your excel file for mistakes! \n"
+                "Common mistakes: \n"
+                "-NetArea of a wall is not equal to 0 \n"
+                "-UsageType of a wall is not empty \n"
+                "Explanation: Rooms may have outer walls/windows on different orientations.\n"
+                "Every row with an empty slot in the column UsageType, "
+                "marks another direction of an outer wall and/or"
+                "window entity of the same room.\n"
+                "The connection of the same room is realised by an "
+                "RoomIdentifier equal to the respective "
+                "BelongsToIdentifier. \n Cluster = %s" % cluster
+            )
+
+    # name usage types after usage types available in the json
+    usage_to_json_usage = {
+        "IsolationRoom": "UKA_07.05.05",
+        "PatientRoom": "UKA_07.05.05",
+        "Aisle": "Corridors in the general care area",
+        "Technical room": "Stock, technical equipment, archives",
+        "Washing": "UKA_07.05.05",
+        "Stairway": "Corridors in the general care area",
+        "WC": "WC and sanitary rooms in non-residential buildings",
+        "Storage": "Stock, technical equipment, archives",
+        "Lounge": "Meeting, Conference, seminar",
+        "Office": "Meeting, Conference, seminar",
+        "Treatment room": "Examination- or treatment room",
+        "StorageChemical": "Stock, technical equipment, archives",
+        "EquipmentServiceAndRinse": "WC and sanitary rooms in non-residential buildings",
+    }
+
+    # rename all zone names from the excel to the according zone name which
+    # is in the UseConditions.json files
+    usages = get_list_of_present_entries(data["RoomClusterUsage"])
+    data["UsageType_Teaser"] = ""
+    for usage in usages:
+        data["UsageType_Teaser"] = np.where(
+            data["RoomClusterUsage"] == usage,
+            usage_to_json_usage[usage],
+            data["UsageType_Teaser"],
+        )
+
+    # name the column where the zones are defined "Zone"
+    data["Zone"] = data["UsageType_Teaser"]
+
+    return data
 
 # -------------------------------------------------------------
 def import_building_from_excel(
@@ -311,24 +448,7 @@ def import_building_from_excel(
     bldg = Building(parent=project)
     bldg.name = building_name
     bldg.year_of_construction = construction_age
-    bldg.with_ahu = True  # HardCodedInput
-    if bldg.with_ahu is True:
-        bldg.central_ahu.heat_recovery = True  # HardCodedInput
-        bldg.central_ahu.efficiency_recovery = 0.35  # HardCodedInput
-        bldg.central_ahu.temperature_profile = 25 * [273.15 + 18]  # HardCodedInput
-        bldg.central_ahu.min_relative_humidity_profile = 25 * [0]  # HardCodedInput
-        bldg.central_ahu.max_relative_humidity_profile = 25 * [1]  # HardCodedInput
-        bldg.central_ahu.v_flow_profile = 25 * [1]  # HardCodedInput
 
-    # Parameters that need hard coding in teasers logic classes
-    # 1. "use_set_back" needs hard coding at aixlib.py in the init; defines
-    # if the in the useconditions stated
-    #   heating_time with the respective set_back_temp should be applied.
-    #   use_set_back = false -> all hours of the day
-    #   have same set_temp_heat actual value: use_set_back = Check your current version!
-    # !This may has been resolved with the last changes in the development
-
-    # Parameters to be set for each and every zone (#HardCodedInput)
     # -----------------------------
     out_wall_tilt = 90
     window_tilt = 90
@@ -350,7 +470,7 @@ def import_building_from_excel(
     print("List of present usage_types in the original Data set: \n%s" % usage_types)
 
     # define the zoning methodology/function
-    data = zoning_example(data)
+    data = zoning_uka(data)
 
     # informative print
     usage_types = get_list_of_present_entries(data["Zone"])
@@ -583,57 +703,192 @@ def import_building_from_excel(
                     % (group["Zone"].iloc[0], group["InnerWallConstructio" "n"].iloc[0])
                 )
 
-        # Block: AHU and infiltration #Attention hard coding
-        # set the supply volume flow of the AHU per zone
-        ahu_dict = {
-            "Bedroom": [15.778, 15.778],
-            "Corridorsinthegeneralcarearea": [5.2941, 5.2941],
-            "Examinationortreatmentroom": [15.743, 15.743],
-            "MeetingConferenceseminar": [16.036, 16.036],
-            "Stocktechnicalequipmentarchives": [20.484, 20.484],
-            "WCandsanitaryroomsinnonresidentialbuildings": [27.692, 27.692],
-        }
-        _i = 0
-        for key in ahu_dict:
-            if tz.name == key:
-                tz.use_conditions.min_ahu = ahu_dict[key][0]
-                tz.use_conditions.max_ahu = ahu_dict[key][1]
-                _i = 1
-        if _i == 0:
-            warnings.warn(
-                "The zone %s could not be found in your ahu_dict. Hence, "
-                "no AHU flow is defined. The default value is "
-                "0 (min_ahu = 0; max_ahu=0" % tz.name
-            )
-
     return project, data
 
+class Building_FillingData():
+    def __init__(self, project):
+        self.prj = project
+        self.bldg = project.buildings[0]
 
-if __name__ == "__main__":
-    result_path = os.path.dirname(__file__)
+    @staticmethod
+    def all_data():
+        bldg.with_ahu = True  # HardCodedInput
+        if bldg.with_ahu is True:
+            bldg.central_ahu.heat_recovery = True  # HardCodedInput
+            bldg.central_ahu.efficiency_recovery = 0.35  # HardCodedInput
+            bldg.central_ahu.efficiency_recovery_false = 0.0  # HardCodedInput
+            bldg.central_ahu.temperature_profile = 25 * [273.15 + 18]  # HardCodedInput
+            bldg.central_ahu.min_relative_humidity_profile = 25 * [0]  # HardCodedInput
+            bldg.central_ahu.max_relative_humidity_profile = 25 * [1]  # HardCodedInput
+            bldg.central_ahu.v_flow_profile = 25 * [1]  # HardCodedInput
+            bldg.central_ahu.efficiency_fan_supply = 0.7
+            bldg.central_ahu.efficiency_fan_return = 0.7
+            bldg.central_ahu.pressure_drop_fan_supply = 500
+            bldg.central_ahu.pressure_drop_fan_return = 500
 
-    prj = Project(load_data=True)
-    prj.name = "BuildingGeneratedviaExcelImport"
-    prj.data.load_uc_binding()
+            prj.weather_file_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                "data",
+                "input",
+                "inputdata",
+                "weatherdata",
+                "DEU_BW_Mannheim_107290_TRY2010_12_Jahr_BBSR.mos",
+            )
+
+        # json
+        tz.use_conditions.infiltration_rate = 0.0
+        tz.use_conditions.with_ahu = True
+        tz.use_conditions.min_ahu = ahu_dict[key][0]
+        tz.use_conditions.max_ahu = ahu_dict[key][1]
+        tz.use_conditions.use_constant_infiltration = True
+        tz.use_conditions.with_cooling = True
+        tz.use_conditions.heating_profile = 25 * [room_temp_set_point_heat]
+        tz.use_conditions.cooling_profile = 25 * [room_temp_set_point_cool]
+
+        prj.buildings[0].sum_cooling_load = -99999.00
+        prj.buildings[0].sum_heat_load = 99999.00
+        prj.buildings[0].thermal_zones[0].t_inside = prj.buildings[0].thermal_zones[0].use_conditions.heating_profile[0]
+
+    def uka_fromdata(self):
+        self.bldg.central_ahu.temperature_profile = 25 * [273.15 + 22]  # should be from data
+        self.bldg.central_ahu.min_relative_humidity_profile = 25 * [0.3]  # should be from data
+        self.bldg.central_ahu.max_relative_humidity_profile = 25 * [1]  # should be from data
+        self.bldg.central_ahu.v_flow_profile = 25 * [1]  # should be from data
+
+    def uka_per_zone(self):
+        '''vermutlich nicht nötig zu setzen, da entweder aus json oder direkt kalibriert'''
+       # json
+        tz.use_conditions.infiltration_rate = 0.5# to calibrate
+        tz.use_conditions.with_ahu = True
+        tz.use_conditions.min_ahu = ahu_dict[key][0]
+        tz.use_conditions.max_ahu = ahu_dict[key][1]
+        tz.use_conditions.use_constant_infiltration = True
+        tz.use_conditions.with_cooling = True
+        tz.use_conditions.heating_profile = 25 * [room_temp_set_point_heat]
+        tz.use_conditions.cooling_profile = 25 * [room_temp_set_point_cool]
+        # occupancy
+
+    def hus(self):
+        #todo: json anpassen, room setpoints, minmaxAHU?,
+        self.prj.weather_file_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "data",
+            "input",
+            "inputdata",
+            "weatherdata",
+            "",
+        )
+        self.bldg.year_of_construction = 1000 # just to import the correct building elements
+        self.bldg.with_ahu = True  # geprüft
+        self.bldg.central_ahu.heat_recovery = True  # geprüft
+        self.bldg.central_ahu.efficiency_recovery = 0.55  # BMS Momentaufnahme
+        self.bldg.central_ahu.efficiency_recovery_false = 0.0  # Kreislaufverbundsystem aber Kanäle liegen direkt aneinander
+        self.bldg.central_ahu.efficiency_fan_supply = 0.7 # estimated
+        self.bldg.central_ahu.efficiency_fan_return = 0.7 # estimated
+        self.bldg.central_ahu.pressure_drop_fan_supply = 300 # BMS Momentaufnahme
+        self.bldg.central_ahu.pressure_drop_fan_return = 300 # BMS Momentaufnahme
+
+        # Ceiling = HUS_VP01_plusEstimatedSuspension
+        # InnerWall_ = HUS_VS02
+        # Window_ = HUS_DoubleFacaded
+        # Floor_ = HUS_VP01_plusEstimatedSuspension
+        # OuterWall_ = HUS_US05
+        # Rooftop_ = HUS_fromStatistic
+        # GroundFloor_ = HUS_fromStatistic
+
+        # occupancy = 0.229
+
+    def hus_fromdata(self):
+        self.bldg.central_ahu.temperature_profile = 25 * [273.15 + 22]  # should be from data
+        self.bldg.central_ahu.min_relative_humidity_profile = 25 * [0.3]  # should be from data
+        self.bldg.central_ahu.max_relative_humidity_profile = 25 * [1]  # should be from data
+        self.bldg.central_ahu.v_flow_profile = 25 * [1]  # should be from data
+
+
+    # Parameters that need hard coding in teasers logic classes
+    # 1. "use_set_back" needs hard coding at aixlib.py in the init; defines
+    # if the in the useconditions stated
+    #   heating_time with the respective set_back_temp should be applied.
+    #   use_set_back = false -> all hours of the day
+    #   have same set_temp_heat actual value: use_set_back = Check your current version!
+    # !This may has been resolved with the last changes in the development
+# Todo: delete
+#     if pos == "UKA":
+#     # Default room UKA 701104
+#         n_one_at_atime = 1
+#     parameter_range = {
+#     "supply_temp": [13.0 + 273.15, 35.0 + 273.15, suptemp + 273.15, n_one_at_atime * 0.25],
+#     "efficiency_recovery": [0.0, 1.0, 0.25, n_one_at_atime * 0.05],
+#     "supply_vol_flow": [1.5, 42.00, 8.96, n_one_at_atime * 0.5],
+#     "room_temp_set_point_heat": [20.0 + 273.15, 25.0 + 273.15, 22.0 + 273.15, n_one_at_atime * 0.25],
+#     "room_temp_set_point_cool": [23.0 + 273.15, 26.0 + 273.15, 26.0 + 273.15, n_one_at_atime * 0.25],
+#     "storey": [0, 2, 1, n_one_at_atime * 1],
+#     "inside": [0, 1, 0, n_one_at_atime * 1],
+#     "humidity": [0, 3, 2, n_one_at_atime * 1],
+#     "orientation": [0, 359, 270, n_one_at_atime * 1],
+#     "year": [1910, 2020, 2020, n_one_at_atime * 10],
+#     "occupancy": [0.229, 0.229, 0.0, n_one_at_atime * 0.001],
+#     }
+#     else:
+#     parameter_range = {
+#     "supply_temp": [13.0 + 273.15, 35.0 + 273.15, 18.0 + 273.15, 0.25],
+#     "efficiency_recovery": [0.0, 1.0, 0.55, 0.05],
+#     "supply_vol_flow": [1.5, 42.000, 11.180, 0.5],
+#     "room_temp_set_point_heat": [20.0 + 273.15, 25.0 + 273.15, 22.0 + 273.15, 0.25],
+#     "room_temp_set_point_cool": [23.0 + 273.15, 26.0 + 273.15, 26.0 + 273.15, 0.25],
+#     "storey": [0, 2, 1, 1],
+#     "inside": [0, 1, 0, 1],
+#     "humidity": [0, 3, 0, 1],
+#     "orientation": [0, 359, 312, 1],
+#     "year": [1910, 2020, 2020, 10],
+#     "occupancy": [0.229, 0.229, 0.0, 0.001],
+#     }
+
+
+#------------------------------------------------------
+def uka_fill(prj):
+    #todo: minmaxAHU?,
+    prj.internal_gains_mode = 1
     prj.weather_file_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "data",
         "input",
         "inputdata",
         "weatherdata",
-        "DEU_BW_Mannheim_107290_TRY2010_12_Jahr_BBSR.mos",
+        "RealData_TRY_mix_Aachen_2020010100_2020043023.mos",
     )
+    prj.buildings[0].year_of_construction = 1970 # just to import the correct building elements
+    prj.buildings[0].with_ahu = True  # geprüft
+    prj.buildings[0].central_ahu.heat_recovery = True  # geprüft
+    prj.buildings[0].central_ahu.efficiency_recovery = 0.25  # Mitarbeiteraussage (unsicher)
+    prj.buildings[0].central_ahu.efficiency_recovery_false = 0.0  # Kreislaufverbundsystem
+    prj.buildings[0].central_ahu.efficiency_fan_supply = 0.7 # estimated
+    prj.buildings[0].central_ahu.efficiency_fan_return = 0.7 # estimated
+    prj.buildings[0].central_ahu.pressure_drop_fan_supply = 1800 # approximated via BMS prints
+    prj.buildings[0].central_ahu.pressure_drop_fan_return = 1000 # approximated via BMS prints
+
+
+if __name__ == "__main__":
+    result_path = os.path.dirname(__file__)
+
+    prj = Project(load_data=True)
+    prj.name = "UKA_Calibration"
+    prj.data.load_uc_binding()
+
     prj.modelica_info.weekday = 0  # 0-Monday, 6-Sunday
     prj.modelica_info.simulation_start = 0  # start time for simulation
 
     PathToExcel = os.path.join(
-        os.path.dirname(__file__), "examplefiles", "ExcelBuildingData_Sample.xlsx"
+        os.path.dirname(__file__), "examplefiles", "UKA_ergänzt", "07.05.05.xlsx"
     )
     prj, Data = import_building_from_excel(
-        prj, "ExampleImport", 2000, PathToExcel, sheet_names=["ImportSheet1"]
+        prj, "1stTry", 1970, PathToExcel, sheet_names=["05"]
     )
 
     prj.modelica_info.current_solver = "dassl"
+
+    uka_fill(prj)
+
     prj.calc_all_buildings(raise_errors=True)
 
     # Hard coding

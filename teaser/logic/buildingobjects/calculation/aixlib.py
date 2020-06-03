@@ -64,7 +64,7 @@ class AixLib(object):
         self.version = "0.9.1"
         self.total_surface_area = None
         self.consider_heat_capacity = True
-        self.use_set_back = True
+        self.use_set_back = False
         self.use_set_point_temperature_profile_heating = False
         self.use_set_back_cool = False
 
