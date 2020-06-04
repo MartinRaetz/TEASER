@@ -875,8 +875,9 @@ if __name__ == "__main__":
     prj.name = "UKA_Calibration"
     prj.data.load_uc_binding()
 
-    prj.modelica_info.weekday = 0  # 0-Monday, 6-Sunday
-    prj.modelica_info.simulation_start = 0  # start time for simulation
+    prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
+    prj.modelica_info.start_time = 0  # start time for simulation
+    prj.modelica_info.stop_time = 10454400 # end time for simulation
 
     PathToExcel = os.path.join(
         os.path.dirname(__file__), "examplefiles", "UKA_ergänzt", "07.05.05.xlsx"
