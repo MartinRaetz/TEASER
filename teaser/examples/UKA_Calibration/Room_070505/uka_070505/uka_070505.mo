@@ -18,7 +18,7 @@ model uka_070505
       },
   heatAHU=true,
   coolAHU=true,
-  dehuAHU=true,
+  dehuAHU=false,
   huAHU=true,
   BPFDehuAHU=0.2,
   HRS=true,

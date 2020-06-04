@@ -846,8 +846,8 @@ def uka_fill(prj):
     )
     prj.buildings[0].year_of_construction = 1970 # just to import the correct building elements
     prj.buildings[0].with_ahu = True  # geprüft
-    prj.buildings[0].dehumidification = False  # geprüft
-    prj.buildings[0].humidification = True  # geprüft
+    prj.buildings[0].central_ahu.dehumidification = False  # geprüft
+    prj.buildings[0].central_ahu.humidification = True  # geprüft
     prj.buildings[0].central_ahu.heat_recovery = True  # geprüft
     prj.buildings[0].central_ahu.efficiency_recovery = 0.25  # Mitarbeiteraussage (unsicher)
     prj.buildings[0].central_ahu.efficiency_recovery_false = 0.0  # Kreislaufverbundsystem
