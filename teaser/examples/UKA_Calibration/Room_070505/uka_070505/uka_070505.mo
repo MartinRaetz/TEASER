@@ -1,7 +1,7 @@
 
-within UKA_Calibration.B1stTry;
-model B1stTry
-  "This is the simulation model of B1stTry with traceable ID 0"
+within Room_070505.uka_070505;
+model uka_070505
+  "This is the simulation model of uka_070505 with traceable ID 0"
 
   AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
     redeclare package Medium = Modelica.Media.Air.SimpleAir,
@@ -14,7 +14,7 @@ model B1stTry
     numZones = 1,
     internalGainsMode = 1,
     zoneParam = {
-      B1stTry_DataBase.B1stTry_UKA_070505()
+      uka_070505_DataBase.uka_070505_UKA_070505()
       },
   heatAHU=true,
   coolAHU=true,
@@ -54,7 +54,7 @@ model B1stTry
     extrapolation=Modelica.Blocks.Types.Extrapolation.Periodic,
     tableName="Internals",
     fileName=Modelica.Utilities.Files.loadResource(
-        "modelica://UKA_Calibration/B1stTry/InternalGains_B1stTry.txt"),
+        "modelica://Room_070505/uka_070505/InternalGains_uka_070505.txt"),
     columns=2:4)
     "Profiles for internal gains"
     annotation (Placement(transformation(extent={{72,-42},{56,-26}})));
@@ -65,7 +65,7 @@ model B1stTry
     tableName="AHU",
     columns=2:5,
     fileName=Modelica.Utilities.Files.loadResource(
-        "modelica://UKA_Calibration/B1stTry/AHU_B1stTry.txt"))
+        "modelica://Room_070505/uka_070505/AHU_uka_070505.txt"))
     "Boundary conditions for air handling unit"
     annotation (Placement(transformation(extent={{-64,-6},{-48,10}})));
 
@@ -74,7 +74,7 @@ model B1stTry
     tableName="Tset",
     extrapolation=Modelica.Blocks.Types.Extrapolation.Periodic,
     fileName=Modelica.Utilities.Files.loadResource(
-        "modelica://UKA_Calibration/B1stTry/TsetHeat_B1stTry.txt"),
+        "modelica://Room_070505/uka_070505/TsetHeat_uka_070505.txt"),
     columns=2:2)
     "Set points for heater"
     annotation (Placement(transformation(extent={{72,-66},{56,-50}})));
@@ -84,7 +84,7 @@ model B1stTry
       tableName="Tset",
       extrapolation=Modelica.Blocks.Types.Extrapolation.Periodic,
       fileName=Modelica.Utilities.Files.loadResource(
-          "modelica://UKA_Calibration/B1stTry/TsetCool_B1stTry.txt"),
+          "modelica://Room_070505/uka_070505/TsetCool_uka_070505.txt"),
       columns=2:2)
       "Set points for cooler"
     annotation (Placement(transformation(extent={{72,-90},{56,-74}})));
@@ -132,4 +132,4 @@ equation
           fillColor={0,0,255},
           fillPattern=FillPattern.Solid,
           textString="TB")}));
-end B1stTry;
+end uka_070505;

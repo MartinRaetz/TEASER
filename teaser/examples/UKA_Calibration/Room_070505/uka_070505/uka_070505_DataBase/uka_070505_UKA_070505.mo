@@ -1,6 +1,6 @@
  
-within UKA_Calibration.B1stTry.B1stTry_DataBase;
-record B1stTry_UKA_070505 "B1stTry_UKA_070505"
+within Room_070505.uka_070505.uka_070505_DataBase;
+record uka_070505_UKA_070505 "uka_070505_UKA_070505"
   extends AixLib.DataBase.ThermalZones.ZoneBaseRecord(
     T_start = 293.15,
     withAirCap = true,
@@ -89,4 +89,4 @@ record B1stTry_UKA_070505 "B1stTry_UKA_070505"
     withIdealThresholds = false,
     TThresholdHeater = 288.15,
     TThresholdCooler = 200);
-end B1stTry_UKA_070505;
+end uka_070505_UKA_070505;

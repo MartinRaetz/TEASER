@@ -755,19 +755,6 @@ class Building_FillingData():
         self.bldg.central_ahu.max_relative_humidity_profile = 25 * [1]  # should be from data
         self.bldg.central_ahu.v_flow_profile = 25 * [1]  # should be from data
 
-    def uka_per_zone(self):
-        '''vermutlich nicht nötig zu setzen, da entweder aus json oder direkt kalibriert'''
-       # json
-        tz.use_conditions.infiltration_rate = 0.5# to calibrate
-        tz.use_conditions.with_ahu = True
-        tz.use_conditions.min_ahu = ahu_dict[key][0]
-        tz.use_conditions.max_ahu = ahu_dict[key][1]
-        tz.use_conditions.use_constant_infiltration = True
-        tz.use_conditions.with_cooling = True
-        tz.use_conditions.heating_profile = 25 * [room_temp_set_point_heat]
-        tz.use_conditions.cooling_profile = 25 * [room_temp_set_point_cool]
-        # occupancy
-
     def hus(self):
         #todo: json anpassen, room setpoints, minmaxAHU?,
         self.prj.weather_file_path = os.path.join(
@@ -847,8 +834,8 @@ class Building_FillingData():
 
 #------------------------------------------------------
 def uka_fill(prj):
-    #todo: minmaxAHU?,
     prj.internal_gains_mode = 1
+    prj.number_of_elements_calc = 2
     prj.weather_file_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "data",
@@ -859,6 +846,8 @@ def uka_fill(prj):
     )
     prj.buildings[0].year_of_construction = 1970 # just to import the correct building elements
     prj.buildings[0].with_ahu = True  # geprüft
+    prj.buildings[0].dehumidification = False  # geprüft
+    prj.buildings[0].humidification = True  # geprüft
     prj.buildings[0].central_ahu.heat_recovery = True  # geprüft
     prj.buildings[0].central_ahu.efficiency_recovery = 0.25  # Mitarbeiteraussage (unsicher)
     prj.buildings[0].central_ahu.efficiency_recovery_false = 0.0  # Kreislaufverbundsystem
@@ -869,10 +858,11 @@ def uka_fill(prj):
 
 
 if __name__ == "__main__":
-    result_path = os.path.dirname(__file__)
+    result_folder = "UKA_Calibration"
+    result_path = os.path.join(os.path.dirname(__file__), result_folder)
 
     prj = Project(load_data=True)
-    prj.name = "UKA_Calibration"
+    prj.name = "Room_070505"
     prj.data.load_uc_binding()
 
     prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
@@ -880,10 +870,10 @@ if __name__ == "__main__":
     prj.modelica_info.stop_time = 10454400 # end time for simulation
 
     PathToExcel = os.path.join(
-        os.path.dirname(__file__), "examplefiles", "UKA_ergänzt", "07.05.05.xlsx"
+        os.path.dirname(__file__), "examplefiles", "UKA", "07.05.05.xlsx"
     )
     prj, Data = import_building_from_excel(
-        prj, "1stTry", 1970, PathToExcel, sheet_names=["05"]
+        prj, "uka_070505", 1970, PathToExcel, sheet_names=["05"]
     )
 
     prj.modelica_info.current_solver = "dassl"
