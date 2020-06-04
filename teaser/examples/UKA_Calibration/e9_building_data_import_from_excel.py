@@ -402,8 +402,6 @@ def zoning_uka(data):
 
     return data
 
-
-
 # -------------------------------------------------------------
 def import_building_from_excel(
     project, building_name, construction_age, path_to_excel, sheet_names
@@ -707,7 +705,6 @@ def import_building_from_excel(
 
     return project, data
 
-
 class Building_FillingData():
     def __init__(self, project):
         self.prj = project
@@ -850,7 +847,8 @@ class Building_FillingData():
 
 #------------------------------------------------------
 def uka_fill(prj):
-    #todo: json anpassen, room setpoints, minmaxAHU?,
+    #todo: minmaxAHU?,
+    prj.internal_gains_mode = 1
     prj.weather_file_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "data",
@@ -877,8 +875,9 @@ if __name__ == "__main__":
     prj.name = "UKA_Calibration"
     prj.data.load_uc_binding()
 
-    prj.modelica_info.weekday = 0  # 0-Monday, 6-Sunday
-    prj.modelica_info.simulation_start = 0  # start time for simulation
+    prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
+    prj.modelica_info.start_time = 0  # start time for simulation
+    prj.modelica_info.stop_time = 10454400 # end time for simulation
 
     PathToExcel = os.path.join(
         os.path.dirname(__file__), "examplefiles", "UKA_ergänzt", "07.05.05.xlsx"

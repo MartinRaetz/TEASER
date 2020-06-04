@@ -56,7 +56,7 @@ record B1stTry_UKA_070505 "B1stTry_UKA_070505"
     wfWall = {1.0},
     wfWin = {1.0},
     wfGro = 0,
-    specificPeople = 0.1,
+    specificPeople = 1,
     fixedHeatFlowRatePersons = 70,
     internalGainsMoistureNoPeople = 0.5,
     activityDegree = 1.2,
@@ -74,8 +74,8 @@ record B1stTry_UKA_070505 "B1stTry_UKA_070505"
     maxIrr = {99999.0},
     shadingFactor = {0.0},
     withAHU = true,
-    minAHU = 0.0,
-    maxAHU = 0.0,
+    minAHU = 9.072,
+    maxAHU = 9.072,
     hHeat = 2515.359709543068,
     lHeat = 0,
     KRHeat = 100,
@@ -88,5 +88,5 @@ record B1stTry_UKA_070505 "B1stTry_UKA_070505"
     CoolerOn = false,
     withIdealThresholds = false,
     TThresholdHeater = 288.15,
-    TThresholdCooler = 295.15);
+    TThresholdCooler = 200);
 end B1stTry_UKA_070505;

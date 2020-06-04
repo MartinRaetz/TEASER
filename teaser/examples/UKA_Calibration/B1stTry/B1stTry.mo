@@ -109,7 +109,7 @@ equation
 
   annotation (experiment(
       StartTime=0,
-      StopTime=31536000,
+      StopTime=10454400,
       Interval=3600,
       __Dymola_Algorithm="dassl"),
       __Dymola_experimentSetupOutput(equidistant=true,
