@@ -45,7 +45,7 @@ model uka_070505
     calTSky=AixLib.BoundaryConditions.Types.SkyTemperatureCalculation.HorizontalRadiation,
     computeWetBulbTemperature=false,
     filNam=
-      "D:/Git_Repos/Teaser_MartinRaetz/teaser/data/input/inputdata/weatherdata/RealData_TRY_mix_Aachen_2020010100_2020043023.mos")
+      "D:/mre-jba/Py/TEASER/teaser/data/input/inputdata/weatherdata/RealData_TRY_mix_Aachen_2020010100_2020043023.mos")
     "Weather data reader"
     annotation (Placement(transformation(extent={{-82,30},{-62,50}})));
 
@@ -113,7 +113,11 @@ equation
       Interval=3600,
       __Dymola_Algorithm="dassl"),
       __Dymola_experimentSetupOutput(equidistant=true,
-      events=false),
+      events=false,
+      states=False,
+      derivatives=False,
+      inputs=False,
+      auxiliaries=False),
     Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}}),
         graphics={
         Line(points={{80,-82}}, color={28,108,200}),
