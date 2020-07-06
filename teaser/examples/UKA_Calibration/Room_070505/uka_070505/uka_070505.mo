@@ -1,4 +1,3 @@
-
 within Room_070505.uka_070505;
 model uka_070505
   "This is the simulation model of uka_070505 with traceable ID 0"
@@ -7,15 +6,14 @@ model uka_070505
     redeclare package Medium = Modelica.Media.Air.SimpleAir,
     buildingID=0,
     energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
-    T_start = 293.15,
+    T_start=298.65,
     VAir = 117.65599999999999,
     ABuilding=42.019999999999996,
     ASurTot=108.93999999999998,
     numZones = 1,
     internalGainsMode = 1,
     zoneParam = {
-      uka_070505_DataBase.uka_070505_UKA_070505()
-      },
+      uka_070505_DataBase.uka_070505_UKA_070505()},
   heatAHU=true,
   coolAHU=true,
   dehuAHU=false,
@@ -27,11 +25,11 @@ model uka_070505
   effFanAHU_eta=0.7,
   effHRSAHU_enabled=0.25,
   effHRSAHU_disabled=0.0,
-  dpAHU_sup=1800,
-  dpAHU_eta=1000,
+    dpAHU_sup=1800,
+    dpAHU_eta=1000,
   zone(ROM(extWallRC(thermCapExt(each der_T(fixed=true))),
-           intWallRC(thermCapInt(each der_T(fixed=true))),floorRC
-           (thermCapExt(each der_T(fixed=true))),roofRC(thermCapExt(each
+           intWallRC(thermCapInt(each der_T(fixed=true))),floorRC(
+            thermCapExt(each der_T(fixed=true))),roofRC(thermCapExt(each
            der_T(fixed=true))))),
    redeclare model thermalZone =
         AixLib.ThermalZones.ReducedOrder.ThermalZone.ThermalZoneAirExchange,
@@ -45,7 +43,7 @@ model uka_070505
     calTSky=AixLib.BoundaryConditions.Types.SkyTemperatureCalculation.HorizontalRadiation,
     computeWetBulbTemperature=false,
     filNam=
-      "D:/mre-jba/Py/TEASER/teaser/data/input/inputdata/weatherdata/RealData_TRY_mix_Aachen_2020010100_2020043023.mos")
+        "D:/mre-jba/Git/TEASER_MartinRaetz/teaser/data/input/inputdata/weatherdata/RealData_TRY_mix_Aachen_2020010100_2020043023.mos")
     "Weather data reader"
     annotation (Placement(transformation(extent={{-82,30},{-62,50}})));
 
@@ -104,8 +102,9 @@ equation
   connect(tableTSet.y, multizone.TSetHeat) annotation (Line(points={{55.2,-58},
           {36.8,-58},{36.8,-9}}, color={0,0,127}));
 
-  connect(tableTSetCool.y, multizone.TSetCool) annotation (Line(points={{55.2,-58},
-          {36.8,-58},{36.8,-9}}, color={0,0,127}));
+  connect(tableTSetCool.y, multizone.TSetCool) annotation (Line(points={{55.2,
+          -82},{34.6,-82},{34.6,-9}},
+                                 color={0,0,127}));
 
   annotation (experiment(
       StartTime=0,
