@@ -1,4 +1,3 @@
- 
 within Room_070505.uka_070505.uka_070505_DataBase;
 record uka_070505_UKA_070505 "uka_070505_UKA_070505"
   extends AixLib.DataBase.ThermalZones.ZoneBaseRecord(
@@ -20,7 +19,7 @@ record uka_070505_UKA_070505 "uka_070505_UKA_070505"
     hConExt = 2.700000000000001,
     nExt = 1,
     RExt = {0.0017814011644087405},
-    RExtRem = 0.057107487724480176 ,
+    RExtRem = 0.057107487724480176,
     CExt = {6284642.113729782},
     AInt = 83.73999999999998,
     hConInt = 2.19820874134225,
@@ -74,7 +73,7 @@ record uka_070505_UKA_070505 "uka_070505_UKA_070505"
     maxIrr = {99999.0},
     shadingFactor = {0.0},
     withAHU = true,
-    minAHU = 9.072,
+    minAHU = 0,
     maxAHU = 9.072,
     hHeat = 2515.359709543068,
     lHeat = 0,
