@@ -1,72 +1,48 @@
-<%namespace file="/modelica_language/" import="get_true_false"/>
-within ${bldg.parent.name}.${bldg.name};
-model ${bldg.name}
-  "This is the simulation model of ${bldg.name} with traceable ID ${bldg.building_id}"
 
+within BuildingGeneratedviaExcelImport.ExampleImport;
+model ExampleImport
+  "This is the simulation model of ExampleImport with traceable ID 0"
 
-AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
-    buildingID=${bldg.building_id},
+  AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
+    redeclare package Medium = Modelica.Media.Air.SimpleAir,
+    buildingID=0,
     energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
-    T_start = ${bldg.thermal_zones[0].t_inside},
-    VAir = ${bldg.volume},
-    ABuilding=${bldg.net_leased_area},
-    ASurTot=${bldg.library_attr.total_surface_area},
-    numZones = ${len(bldg.thermal_zones)},
-    internalGainsMode = ${bldg.internal_gains_mode},
-    % if bldg.internal_gains_mode==3:
-        use_C_flow = true,
-        use_moisture_balance = true,
-        redeclare package Medium = AixLib.Media.Air(extraPropertiesNames={"C_flow"}),
-    % else:
-        use_C_flow = false,
-        use_moisture_balance = false,
-        redeclare package Medium = Modelica.Media.Air.SimpleAir,
-    % endif
+    T_start = 293.15,
+    VAir = 2270.7999999999997,
+    ABuilding=810.9999999999999,
+    ASurTot=2176.537766216216,
+    numZones = 6,
+    internalGainsMode = 1,
     zoneParam = {
-      %for zone in bldg.thermal_zones:
-      ${bldg.name}_DataBase.${bldg.name}_${zone.name}()${',' if not loop.last else ''}
-      %endfor
+      ExampleImport_DataBase.ExampleImport_Bedroom(),
+      ExampleImport_DataBase.ExampleImport_Corridorsinthegeneralcarearea(),
+      ExampleImport_DataBase.ExampleImport_Examinationortreatmentroom(),
+      ExampleImport_DataBase.ExampleImport_MeetingConferenceseminar(),
+      ExampleImport_DataBase.ExampleImport_Stocktechnicalequipmentarchives(),
+      ExampleImport_DataBase.ExampleImport_WCandsanitaryroomsinnonresidentialbuildings()
       },
-% if bldg.with_ahu:
-  heatAHU=${get_true_false(bldg.central_ahu.heating)},
-  coolAHU=${get_true_false(bldg.central_ahu.cooling)},
-  dehuAHU=${get_true_false(bldg.central_ahu.dehumidification)},
-  huAHU=${get_true_false(bldg.central_ahu.humidification)},
-  BPFDehuAHU=${bldg.central_ahu.by_pass_dehumidification},
-  HRS=${get_true_false(bldg.central_ahu.heat_recovery)},
-  sampleRateAHU=${bldg.central_ahu.sample_rate},
-  effFanAHU_sup=${bldg.central_ahu.efficiency_fan_supply},
-  effFanAHU_eta=${bldg.central_ahu.efficiency_fan_return},
-  effHRSAHU_enabled=${bldg.central_ahu.efficiency_recovery},
-  effHRSAHU_disabled=${bldg.central_ahu.efficiency_recovery_false},
-  dpAHU_sup=${bldg.central_ahu.pressure_drop_fan_supply},
-  dpAHU_eta=${bldg.central_ahu.pressure_drop_fan_return},
-% else:
-  heatAHU = false,
-  coolAHU = false,
-  dehuAHU = false,
-  huAHU = false,
-  BPFDehuAHU = 0.2,
-  HRS = false,
+  heatAHU=true,
+  coolAHU=true,
+  dehuAHU=true,
+  huAHU=true,
+  BPFDehuAHU=0.2,
+  HRS=true,
   sampleRateAHU=1800,
   effFanAHU_sup=0.7,
   effFanAHU_eta=0.7,
-  effHRSAHU_enabled = 0.8,
-  effHRSAHU_disabled = 0.2,
+  effHRSAHU_enabled=0.35,
+  effHRSAHU_disabled=0.2,
   dpAHU_sup=800,
   dpAHU_eta=800,
-% endif
   zone(ROM(extWallRC(thermCapExt(each der_T(fixed=true))),
            intWallRC(thermCapInt(each der_T(fixed=true))),floorRC
            (thermCapExt(each der_T(fixed=true))),roofRC(thermCapExt(each
            der_T(fixed=true))))),
+   redeclare model thermalZone =
+        AixLib.ThermalZones.ReducedOrder.ThermalZone.ThermalZoneAirExchange,
    redeclare model corG =
         AixLib.ThermalZones.ReducedOrder.SolarGain.CorrectionGDoublePane,
-% if bldg.central_ahu:
   redeclare model AHUMod = AixLib.Airflow.AirHandlingUnit.AHU)
-% else:
-  redeclare model AHUMod = AixLib.Airflow.AirHandlingUnit.NoAHU)
-% endif
     "Multizone"
     annotation (Placement(transformation(extent={{32,-8},{52,12}})));
 
@@ -74,7 +50,7 @@ AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
     calTSky=AixLib.BoundaryConditions.Types.SkyTemperatureCalculation.HorizontalRadiation,
     computeWetBulbTemperature=false,
     filNam=
-      "${weather.replace("\\", "/")}")
+      "D:/mre-jba/Git/TEASER/teaser/data/input/inputdata/weatherdata/DEU_BW_Mannheim_107290_TRY2010_12_Jahr_BBSR.mos")
     "Weather data reader"
     annotation (Placement(transformation(extent={{-82,30},{-62,50}})));
 
@@ -83,8 +59,8 @@ AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
     extrapolation=Modelica.Blocks.Types.Extrapolation.Periodic,
     tableName="Internals",
     fileName=Modelica.Utilities.Files.loadResource(
-        "modelica://${bldg.parent.name}/${bldg.name}/${bldg.library_attr.file_internal_gains}"),
-    columns=2:${(3*len(bldg.thermal_zones))+1})
+        "modelica://BuildingGeneratedviaExcelImport/ExampleImport/InternalGains_ExampleImport.txt"),
+    columns=2:19)
     "Profiles for internal gains"
     annotation (Placement(transformation(extent={{72,-42},{56,-26}})));
 
@@ -94,7 +70,7 @@ AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
     tableName="AHU",
     columns=2:5,
     fileName=Modelica.Utilities.Files.loadResource(
-        "modelica://${bldg.parent.name}/${bldg.name}/${bldg.library_attr.file_ahu}"))
+        "modelica://BuildingGeneratedviaExcelImport/ExampleImport/AHU_ExampleImport.txt"))
     "Boundary conditions for air handling unit"
     annotation (Placement(transformation(extent={{-64,-6},{-48,10}})));
 
@@ -103,8 +79,8 @@ AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
     tableName="Tset",
     extrapolation=Modelica.Blocks.Types.Extrapolation.Periodic,
     fileName=Modelica.Utilities.Files.loadResource(
-        "modelica://${bldg.parent.name}/${bldg.name}/${bldg.library_attr.file_set_t_heat}"),
-    columns=2:${len(bldg.thermal_zones)+1})
+        "modelica://BuildingGeneratedviaExcelImport/ExampleImport/TsetHeat_ExampleImport.txt"),
+    columns=2:7)
     "Set points for heater"
     annotation (Placement(transformation(extent={{72,-66},{56,-50}})));
 
@@ -113,8 +89,8 @@ AixLib.ThermalZones.ReducedOrder.Multizone.MultizoneEquipped multizone(
       tableName="Tset",
       extrapolation=Modelica.Blocks.Types.Extrapolation.Periodic,
       fileName=Modelica.Utilities.Files.loadResource(
-          "modelica://${bldg.parent.name}/${bldg.name}/${bldg.library_attr.file_set_t_cool}"),
-      columns=2:${len(bldg.thermal_zones)+1})
+          "modelica://BuildingGeneratedviaExcelImport/ExampleImport/TsetCool_ExampleImport.txt"),
+      columns=2:7)
       "Set points for cooler"
     annotation (Placement(transformation(extent={{72,-90},{56,-74}})));
 
@@ -137,16 +113,12 @@ equation
           {36.8,-58},{36.8,-9}}, color={0,0,127}));
 
   annotation (experiment(
-      StartTime=${str(zone.parent.parent.modelica_info.start_time)},
-      StopTime=${str(zone.parent.parent.modelica_info.stop_time)},
-      Interval=${modelica_info.interval_output},
-      __Dymola_Algorithm="${modelica_info.current_solver}"),
-      __Dymola_experimentSetupOutput(equidistant=${get_true_false(modelica_info.equidistant_output)},
-      events=${get_true_false(modelica_info.results_at_events)},
-      states=${False},
-      derivatives=${False},
-      inputs=${False},
-      auxiliaries=${False}),
+      StartTime=0,
+      StopTime=31536000,
+      Interval=3600,
+      __Dymola_Algorithm="dassl"),
+      __Dymola_experimentSetupOutput(equidistant=true,
+      events=false),
     Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}}),
         graphics={
         Line(points={{80,-82}}, color={28,108,200}),
@@ -165,4 +137,4 @@ equation
           fillColor={0,0,255},
           fillPattern=FillPattern.Solid,
           textString="TB")}));
-end ${bldg.name};
+end ExampleImport;
