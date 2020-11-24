@@ -448,6 +448,7 @@ def import_building_from_excel(
     bldg = Building(parent=project)
     bldg.name = building_name
     bldg.year_of_construction = construction_age
+    bldg.internal_gains_mode = 3  # HardCodedInput
 
     # -----------------------------
     out_wall_tilt = 90
