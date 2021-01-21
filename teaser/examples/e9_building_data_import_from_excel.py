@@ -251,16 +251,16 @@ def zoning_example(data):
     # rename all zone names from the excel to the according zone name which
     # is in the UseConditions.json files
     usages = get_list_of_present_entries(data["RoomClusterUsage"])
-    data["UsageType_Teaser"] = ""
-    for usage in usages:
-        data["UsageType_Teaser"] = np.where(
-            data["RoomClusterUsage"] == usage,
-            usage_to_json_usage[usage],
-            data["UsageType_Teaser"],
-        )
+    # data["UsageType_Teaser"] = ""
+    # for usage in usages:
+    #     data["UsageType_Teaser"] = np.where(
+    #         data["RoomClusterUsage"] == usage,
+    #         usage_to_json_usage[usage],
+    #         data["UsageType_Teaser"],
+    #     )
 
     # name the column where the zones are defined "Zone"
-    data["Zone"] = data["UsageType_Teaser"]
+    data["Zone"] = data["RoomClusterUsage"]
 
     return data
 
@@ -471,7 +471,7 @@ def import_building_from_excel(
     print("List of present usage_types in the original Data set: \n%s" % usage_types)
 
     # define the zoning methodology/function
-    data = zoning_uka(data)
+    data = zoning_example(data)
 
     # informative print
     usage_types = get_list_of_present_entries(data["Zone"])
@@ -480,6 +480,9 @@ def import_building_from_excel(
     # aggregate all rooms of each zone and for each set general parameter,
     # boundary conditions
     # and parameter regarding the building physics
+
+    room_share = pd.DataFrame(columns=["Floor","UsageType","Area", "Volume","Number","OuterWallAreaInclWin","WindowArea","InnerWallArea"])
+
     zones = data.groupby(["Zone"])
     for name, zone in zones:
 
@@ -491,220 +494,227 @@ def import_building_from_excel(
         tz.volume = np.nansum(
             np.array(zone["NetArea[m²]"]) * np.array(zone["HeatedRoomHeight[m]"])
         )
+        windowarea = np.nansum(zone["WindowArea[m²]"])
+        outwall = np.nansum(zone["OuterWallAreaInclWindow"])
+        intwall = np.nansum(zone["InnerWallArea[m²]"])
+
+        row = {"Floor":zone["Floor"].iloc[0],"UsageType":tz.name, "Area":tz.area,"Volume":tz.volume, "Number":len(zone), "OuterWallAreaInclWin":outwall, "WindowArea":windowarea, "InnerWallArea":intwall}
+        room_share = room_share.append(row, ignore_index=True)
 
         # Block: Boundary Conditions
         # load UsageOperationTime, Lighting, RoomClimate and InternalGains
         # from the "UseCondition.json"
-        tz.use_conditions = UseConditions(parent=tz)
-        tz.use_conditions.load_use_conditions(
-            zone["UsageType_Teaser"].iloc[0], project.data
-        )
+        # tz.use_conditions = UseConditions(parent=tz)
+        # tz.use_conditions.load_use_conditions(
+        #     zone["Zone"].iloc[0], project.data
+        # )
 
-        # Block: Building Physics
-        # Grouping by orientation and construction type
-        # aggregating and feeding to the teaser logic classes
-        grouped = zone.groupby(["OuterWallOrientation[°]", "OuterWallConstruction"])
-        for name, group in grouped:
-            # looping through a groupby object automatically discards the
-            # groups where one of the attributes is nan
-            # additionally check for strings, since the value must be of type
-            # int or float
-            if not isinstance(group["OuterWallOrientation[°]"].iloc[0], str):
-                if (
-                    np.nansum(group["OuterWallArea[m²]"]) > 0
-                ):  # only create element if it has an area
-                    out_wall = OuterWall(parent=tz)
-                    out_wall.name = (
-                        "outer_wall_"
-                        + str(int(group["OuterWallOrientation[°]"].iloc[0]))
-                        + "_"
-                        + str(group["OuterWallConstruction"].iloc[0])
-                    )
-                    out_wall.area = np.nansum(group["OuterWallArea[m²]"])
-                    out_wall.tilt = out_wall_tilt
-                    out_wall.orientation = group["OuterWallOrientation[°]"].iloc[0]
-                    # load wall properties from "TypeBuildingElements.json"
-                    out_wall.load_type_element(
-                        year=bldg.year_of_construction,
-                        construction=group["OuterWallConstruction"].iloc[0],
-                    )
-                    warn_constructiontype(out_wall)
-            else:
-                warnings.warn(
-                    'In zone "%s" the OuterWallOrientation "%s" is '
-                    "neither float nor int, "
-                    "hence this building element is not added.\nHere is the "
-                    "list of faulty entries:\n%s"
-                    "\n These entries can easily be found checking the stated "
-                    "index in the produced ZonedInput.xlsx"
-                    % (
-                        group["Zone"].iloc[0],
-                        group["OuterWallOrientation[°]"].iloc[0],
-                        group,
-                    )
-                )
+        # # Block: Building Physics
+        # # Grouping by orientation and construction type
+        # # aggregating and feeding to the teaser logic classes
+        # grouped = zone.groupby(["OuterWallOrientation[°]", "OuterWallConstruction"])
+        # for name, group in grouped:
+        #     # looping through a groupby object automatically discards the
+        #     # groups where one of the attributes is nan
+        #     # additionally check for strings, since the value must be of type
+        #     # int or float
+        #     if not isinstance(group["OuterWallOrientation[°]"].iloc[0], str):
+        #         if (
+        #             np.nansum(group["OuterWallArea[m²]"]) > 0
+        #         ):  # only create element if it has an area
+        #             out_wall = OuterWall(parent=tz)
+        #             out_wall.name = (
+        #                 "outer_wall_"
+        #                 + str(int(group["OuterWallOrientation[°]"].iloc[0]))
+        #                 + "_"
+        #                 + str(group["OuterWallConstruction"].iloc[0])
+        #             )
+        #             out_wall.area = np.nansum(group["OuterWallArea[m²]"])
+        #             out_wall.tilt = out_wall_tilt
+        #             out_wall.orientation = group["OuterWallOrientation[°]"].iloc[0]
+        #             # load wall properties from "TypeBuildingElements.json"
+        #             out_wall.load_type_element(
+        #                 year=bldg.year_of_construction,
+        #                 construction=group["OuterWallConstruction"].iloc[0],
+        #             )
+        #             warn_constructiontype(out_wall)
+        #     else:
+        #         warnings.warn(
+        #             'In zone "%s" the OuterWallOrientation "%s" is '
+        #             "neither float nor int, "
+        #             "hence this building element is not added.\nHere is the "
+        #             "list of faulty entries:\n%s"
+        #             "\n These entries can easily be found checking the stated "
+        #             "index in the produced ZonedInput.xlsx"
+        #             % (
+        #                 group["Zone"].iloc[0],
+        #                 group["OuterWallOrientation[°]"].iloc[0],
+        #                 group,
+        #             )
+        #         )
+        #
+        # grouped = zone.groupby(["WindowOrientation[°]", "WindowConstruction"])
+        # for name, group in grouped:
+        #     # looping through a groupby object automatically discards the
+        #     # groups where one of the attributes is nan
+        #     # additionally check for strings, since the value must be of type
+        #     # int or float
+        #     if not isinstance(group["WindowOrientation[°]"].iloc[0], str):
+        #         if (
+        #             np.nansum(group["WindowArea[m²]"]) > 0
+        #         ):  # only create element if it has an area
+        #             window = Window(parent=tz)
+        #             window.name = (
+        #                 "window_"
+        #                 + str(int(group["WindowOrientation[°]"].iloc[0]))
+        #                 + "_"
+        #                 + str(group["WindowConstruction"].iloc[0])
+        #             )
+        #             window.area = np.nansum(group["WindowArea[m²]"])
+        #             window.tilt = window_tilt
+        #             window.orientation = group["WindowOrientation[°]"].iloc[0]
+        #             # load wall properties from "TypeBuildingElements.json"
+        #             window.load_type_element(
+        #                 year=bldg.year_of_construction,
+        #                 construction=group["WindowConstruction"].iloc[0],
+        #             )
+        #             warn_constructiontype(window)
+        #     else:
+        #         warnings.warn(
+        #             'In zone "%s" the window orientation "%s" is neither '
+        #             "float nor int, "
+        #             "hence this building element is not added. Here is the "
+        #             "list of faulty entries:\n%s"
+        #             "\nThese entries can easily be found checking the stated "
+        #             "index in the produced ZonedInput.xlsx"
+        #             % (
+        #                 group["Zone"].iloc[0],
+        #                 group["WindowOrientation[°]"].iloc[0],
+        #                 group,
+        #             )
+        #         )
+        #
+        # grouped = zone.groupby(["IsGroundFloor", "FloorConstruction"])
+        # for name, group in grouped:
+        #     if np.nansum(group["NetArea[m²]"]) != 0:  # to avoid devision by 0
+        #         if group["IsGroundFloor"].iloc[0] == 1:
+        #             ground_floor = GroundFloor(parent=tz)
+        #             ground_floor.name = "ground_floor" + str(
+        #                 group["FloorConstruction"].iloc[0]
+        #             )
+        #             ground_floor.area = np.nansum(group["NetArea[m²]"])
+        #             ground_floor.tilt = ground_floor_tilt
+        #             ground_floor.orientation = ground_floor_orientation
+        #             # load wall properties from "TypeBuildingElements.json"
+        #             ground_floor.load_type_element(
+        #                 year=bldg.year_of_construction,
+        #                 construction=group["FloorConstruction"].iloc[0],
+        #             )
+        #             warn_constructiontype(ground_floor)
+        #         elif group["IsGroundFloor"].iloc[0] == 0:
+        #             floor = Floor(parent=tz)
+        #             floor.name = "floor" + str(group["FloorConstruction"].iloc[0])
+        #             floor.area = np.nansum(group["NetArea[m²]"]) / 2  # only half of
+        #             # the floor belongs to this story
+        #             floor.tilt = floor_tilt
+        #             floor.orientation = floor_orientation
+        #             # load wall properties from "TypeBuildingElements.json"
+        #             floor.load_type_element(
+        #                 year=bldg.year_of_construction,
+        #                 construction=group["FloorConstruction"].iloc[0],
+        #             )
+        #             warn_constructiontype(floor)
+        #         else:
+        #             warnings.warn(
+        #                 "Values for IsGroundFloor have to be either 0 or 1, "
+        #                 "for no or yes respectively"
+        #             )
+        #     else:
+        #         warnings.warn(
+        #             'zone "%s" with IsGroundFloor "%s" and construction '
+        #             'type "%s" '
+        #             "has no floor nor groundfloor, since the area equals 0."
+        #             % (
+        #                 group["Zone"].iloc[0],
+        #                 group["IsGroundFloor"].iloc[0],
+        #                 group["FloorConstruction"].iloc[0],
+        #             )
+        #         )
+        #
+        # grouped = zone.groupby(["IsRooftop", "CeilingConstruction"])
+        # for name, group in grouped:
+        #     if np.nansum(group["NetArea[m²]"]) != 0:  # to avoid devision by 0
+        #         if group["IsRooftop"].iloc[0] == 1:
+        #             rooftop = Rooftop(parent=tz)
+        #             rooftop.name = "rooftop" + str(group["CeilingConstruction"].iloc[0])
+        #             rooftop.area = np.nansum(
+        #                 group["NetArea[m²]"]
+        #             )  # sum up area of respective
+        #             # rooftop parts
+        #             rooftop.tilt = rooftop_tilt
+        #             rooftop.orientation = rooftop_orientation
+        #             # load wall properties from "TypeBuildingElements.json"
+        #             rooftop.load_type_element(
+        #                 year=bldg.year_of_construction,
+        #                 construction=group["CeilingConstruction"].iloc[0],
+        #             )
+        #             warn_constructiontype(rooftop)
+        #         elif group["IsRooftop"].iloc[0] == 0:
+        #             ceiling = Ceiling(parent=tz)
+        #             ceiling.name = "ceiling" + str(group["CeilingConstruction"].iloc[0])
+        #             ceiling.area = np.nansum(group["NetArea[m²]"]) / 2  # only half
+        #             # of the ceiling belongs to a story,
+        #             # the other half to the above
+        #             ceiling.tilt = ceiling_tilt
+        #             ceiling.orientation = ceiling_orientation
+        #             # load wall properties from "TypeBuildingElements.json"
+        #             ceiling.load_type_element(
+        #                 year=bldg.year_of_construction,
+        #                 construction=group["CeilingConstruction"].iloc[0],
+        #             )
+        #             warn_constructiontype(ceiling)
+        #         else:
+        #             warnings.warn(
+        #                 "Values for IsRooftop have to be either 0 or 1, "
+        #                 "for no or yes respectively"
+        #             )
+        #     else:
+        #         warnings.warn(
+        #             'zone "%s" with IsRooftop "%s" and construction type '
+        #             '"%s" '
+        #             "has no ceiling nor rooftop, since the area equals 0."
+        #             % (
+        #                 group["Zone"].iloc[0],
+        #                 group["IsRooftop"].iloc[0],
+        #                 group["CeilingConstruction"].iloc[0],
+        #             )
+        #         )
+        #
+        # grouped = zone.groupby(["InnerWallConstruction"])
+        # for name, group in grouped:
+        #     if np.nansum(group["InnerWallArea[m²]"]) != 0:  # to avoid devision by 0
+        #         in_wall = InnerWall(parent=tz)
+        #         in_wall.name = "inner_wall" + str(
+        #             group["InnerWallConstruction"].iloc[0]
+        #         )
+        #         in_wall.area = np.nansum(group["InnerWallArea[m²]"]) / 2  # only
+        #         # half of the wall belongs to each room,
+        #         # the other half to the adjacent
+        #         # load wall properties from "TypeBuildingElements.json"
+        #         in_wall.load_type_element(
+        #             year=bldg.year_of_construction,
+        #             construction=group["InnerWallConstruction"].iloc[0],
+        #         )
+        #         warn_constructiontype(in_wall)
+        #     else:
+        #         warnings.warn(
+        #             'zone "%s" with inner wall construction "%s" has no '
+        #             "inner walls, since area = 0."
+        #             % (group["Zone"].iloc[0], group["InnerWallConstructio" "n"].iloc[0])
+        #         )
 
-        grouped = zone.groupby(["WindowOrientation[°]", "WindowConstruction"])
-        for name, group in grouped:
-            # looping through a groupby object automatically discards the
-            # groups where one of the attributes is nan
-            # additionally check for strings, since the value must be of type
-            # int or float
-            if not isinstance(group["WindowOrientation[°]"].iloc[0], str):
-                if (
-                    np.nansum(group["WindowArea[m²]"]) > 0
-                ):  # only create element if it has an area
-                    window = Window(parent=tz)
-                    window.name = (
-                        "window_"
-                        + str(int(group["WindowOrientation[°]"].iloc[0]))
-                        + "_"
-                        + str(group["WindowConstruction"].iloc[0])
-                    )
-                    window.area = np.nansum(group["WindowArea[m²]"])
-                    window.tilt = window_tilt
-                    window.orientation = group["WindowOrientation[°]"].iloc[0]
-                    # load wall properties from "TypeBuildingElements.json"
-                    window.load_type_element(
-                        year=bldg.year_of_construction,
-                        construction=group["WindowConstruction"].iloc[0],
-                    )
-                    warn_constructiontype(window)
-            else:
-                warnings.warn(
-                    'In zone "%s" the window orientation "%s" is neither '
-                    "float nor int, "
-                    "hence this building element is not added. Here is the "
-                    "list of faulty entries:\n%s"
-                    "\nThese entries can easily be found checking the stated "
-                    "index in the produced ZonedInput.xlsx"
-                    % (
-                        group["Zone"].iloc[0],
-                        group["WindowOrientation[°]"].iloc[0],
-                        group,
-                    )
-                )
-
-        grouped = zone.groupby(["IsGroundFloor", "FloorConstruction"])
-        for name, group in grouped:
-            if np.nansum(group["NetArea[m²]"]) != 0:  # to avoid devision by 0
-                if group["IsGroundFloor"].iloc[0] == 1:
-                    ground_floor = GroundFloor(parent=tz)
-                    ground_floor.name = "ground_floor" + str(
-                        group["FloorConstruction"].iloc[0]
-                    )
-                    ground_floor.area = np.nansum(group["NetArea[m²]"])
-                    ground_floor.tilt = ground_floor_tilt
-                    ground_floor.orientation = ground_floor_orientation
-                    # load wall properties from "TypeBuildingElements.json"
-                    ground_floor.load_type_element(
-                        year=bldg.year_of_construction,
-                        construction=group["FloorConstruction"].iloc[0],
-                    )
-                    warn_constructiontype(ground_floor)
-                elif group["IsGroundFloor"].iloc[0] == 0:
-                    floor = Floor(parent=tz)
-                    floor.name = "floor" + str(group["FloorConstruction"].iloc[0])
-                    floor.area = np.nansum(group["NetArea[m²]"]) / 2  # only half of
-                    # the floor belongs to this story
-                    floor.tilt = floor_tilt
-                    floor.orientation = floor_orientation
-                    # load wall properties from "TypeBuildingElements.json"
-                    floor.load_type_element(
-                        year=bldg.year_of_construction,
-                        construction=group["FloorConstruction"].iloc[0],
-                    )
-                    warn_constructiontype(floor)
-                else:
-                    warnings.warn(
-                        "Values for IsGroundFloor have to be either 0 or 1, "
-                        "for no or yes respectively"
-                    )
-            else:
-                warnings.warn(
-                    'zone "%s" with IsGroundFloor "%s" and construction '
-                    'type "%s" '
-                    "has no floor nor groundfloor, since the area equals 0."
-                    % (
-                        group["Zone"].iloc[0],
-                        group["IsGroundFloor"].iloc[0],
-                        group["FloorConstruction"].iloc[0],
-                    )
-                )
-
-        grouped = zone.groupby(["IsRooftop", "CeilingConstruction"])
-        for name, group in grouped:
-            if np.nansum(group["NetArea[m²]"]) != 0:  # to avoid devision by 0
-                if group["IsRooftop"].iloc[0] == 1:
-                    rooftop = Rooftop(parent=tz)
-                    rooftop.name = "rooftop" + str(group["CeilingConstruction"].iloc[0])
-                    rooftop.area = np.nansum(
-                        group["NetArea[m²]"]
-                    )  # sum up area of respective
-                    # rooftop parts
-                    rooftop.tilt = rooftop_tilt
-                    rooftop.orientation = rooftop_orientation
-                    # load wall properties from "TypeBuildingElements.json"
-                    rooftop.load_type_element(
-                        year=bldg.year_of_construction,
-                        construction=group["CeilingConstruction"].iloc[0],
-                    )
-                    warn_constructiontype(rooftop)
-                elif group["IsRooftop"].iloc[0] == 0:
-                    ceiling = Ceiling(parent=tz)
-                    ceiling.name = "ceiling" + str(group["CeilingConstruction"].iloc[0])
-                    ceiling.area = np.nansum(group["NetArea[m²]"]) / 2  # only half
-                    # of the ceiling belongs to a story,
-                    # the other half to the above
-                    ceiling.tilt = ceiling_tilt
-                    ceiling.orientation = ceiling_orientation
-                    # load wall properties from "TypeBuildingElements.json"
-                    ceiling.load_type_element(
-                        year=bldg.year_of_construction,
-                        construction=group["CeilingConstruction"].iloc[0],
-                    )
-                    warn_constructiontype(ceiling)
-                else:
-                    warnings.warn(
-                        "Values for IsRooftop have to be either 0 or 1, "
-                        "for no or yes respectively"
-                    )
-            else:
-                warnings.warn(
-                    'zone "%s" with IsRooftop "%s" and construction type '
-                    '"%s" '
-                    "has no ceiling nor rooftop, since the area equals 0."
-                    % (
-                        group["Zone"].iloc[0],
-                        group["IsRooftop"].iloc[0],
-                        group["CeilingConstruction"].iloc[0],
-                    )
-                )
-
-        grouped = zone.groupby(["InnerWallConstruction"])
-        for name, group in grouped:
-            if np.nansum(group["InnerWallArea[m²]"]) != 0:  # to avoid devision by 0
-                in_wall = InnerWall(parent=tz)
-                in_wall.name = "inner_wall" + str(
-                    group["InnerWallConstruction"].iloc[0]
-                )
-                in_wall.area = np.nansum(group["InnerWallArea[m²]"]) / 2  # only
-                # half of the wall belongs to each room,
-                # the other half to the adjacent
-                # load wall properties from "TypeBuildingElements.json"
-                in_wall.load_type_element(
-                    year=bldg.year_of_construction,
-                    construction=group["InnerWallConstruction"].iloc[0],
-                )
-                warn_constructiontype(in_wall)
-            else:
-                warnings.warn(
-                    'zone "%s" with inner wall construction "%s" has no '
-                    "inner walls, since area = 0."
-                    % (group["Zone"].iloc[0], group["InnerWallConstructio" "n"].iloc[0])
-                )
-
-    return project, data
+    room_share = room_share.sort_values("UsageType")
+    return project, room_share
 
 class Building_FillingData():
     def __init__(self, project):
@@ -865,39 +875,47 @@ def uka_fill_070505(prj):
 
 
 if __name__ == "__main__":
-    result_folder = "UKA_Calibration"
+    result_folder = "UKA_RoomShare"
     result_path = os.path.join(os.path.dirname(__file__), result_folder)
 
     prj = Project(load_data=True)
-    prj.name = "Room_070505"
+    prj.name = "RoomShareFloor7"
     prj.data.load_uc_binding()
 
     prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
     prj.modelica_info.start_time = 0  # start time for simulation
     prj.modelica_info.stop_time = 10454400 # end time for simulation
 
+    sieben = "20200201_UKA_Etage_7.xlsx"
+    acht = "20191202_UKA_Etage_8.xlsx"
+    neun = "20200415_UKA_Etage_9.xlsx"
+
     PathToExcel = os.path.join(
-        os.path.dirname(__file__), "examplefiles", "UKA", "07.05.05.xlsx"
+        os.path.dirname(__file__), "examplefiles", "UKA", sieben
     )
+
+    all_sheets = ["B1", "B2", "C1", "C2", "01", "02", "03", "04", "05", "06", "07", "08", "09", "11", "12",
+                     "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"]
+
     prj, Data = import_building_from_excel(
-        prj, "uka_070505", 1970, PathToExcel, sheet_names=["05"]
+        prj, "UKA_07", 1970, PathToExcel, sheet_names=all_sheets
     )
 
-    prj.modelica_info.current_solver = "dassl"
-
-    uka_fill(prj)
-    uka_fill_070505(prj)
-
-    prj.calc_all_buildings(raise_errors=True)
-
-    # Hard coding
-    # for zones: zone.model_attr.cool_load = -5000 or -zone.model_attr.heat_load
-
-    prj.export_aixlib(internal_id=None, path=result_path)
+    # prj.modelica_info.current_solver = "dassl"
+    #
+    # uka_fill(prj)
+    # uka_fill_070505(prj)
+    #
+    # prj.calc_all_buildings(raise_errors=True)
+    #
+    # # Hard coding
+    # # for zones: zone.model_attr.cool_load = -5000 or -zone.model_attr.heat_load
+    #
+    # prj.export_aixlib(internal_id=None, path=result_path)
 
     # if wished, export the zoned DataFrame which is finally used to
     # parametrize the teaser classes
-    Data.to_excel(os.path.join(result_path, prj.name, "ZonedInput.xlsx"))
+    Data.to_excel(os.path.join(result_path, f"{prj.name}.xlsx"))
     # if wished, save the current python script to the results folder to
     # track the used parameters and reproduce results
     shutil.copy(__file__, os.path.join(result_path, prj.name))
