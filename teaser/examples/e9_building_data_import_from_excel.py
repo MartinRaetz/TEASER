@@ -372,11 +372,11 @@ def zoning_HUS(data):
     # name usage types after usage types available in the json
     #TODO: Update values in Json UseConditions
     usage_to_json_usage = {
-        "IsolationRoom": "HUS_7_156",
-        "PatientRoom": "HUS_7_156",
+        "IsolationRoom": "HUS_7_159",
+        "PatientRoom": "HUS_7_159",
         "Aisle": "Corridors in the general care area",
         "Technical room": "Stock, technical equipment, archives",
-        "Washing": "HUS_7_156",
+        "Washing": "HUS_7_159",
         "Stairway": "Corridors in the general care area",
         "WC": "WC and sanitary rooms in non-residential buildings",
         "Storage": "Stock, technical equipment, archives",
@@ -859,7 +859,7 @@ def HUS_fill(prj):
     prj.buildings[0].central_ahu.dehumidification = False  # geprüft
     prj.buildings[0].central_ahu.humidification = False # geprüft
 
-def HUS_fill_7_156(prj):
+def HUS_fill_7_159(prj):
     #TODO: Check with Martin temperature and humidity profile
     #TODO: check array length, 1 value per hour
     prj.buildings[0].central_ahu.temperature_profile = 8760 * [273.15 + 18] # should be from data
@@ -871,7 +871,7 @@ if __name__ == "__main__":
     result_path = os.path.join(os.path.dirname(__file__), result_folder)
 
     prj = Project(load_data=True)
-    prj.name = "Room_7_156"
+    prj.name = "Room_7_159"
     prj.data.load_uc_binding()
 
     prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
@@ -880,16 +880,16 @@ if __name__ == "__main__":
 
     #TODO: Data Zoning in Excel
     PathToExcel = os.path.join(
-        os.path.dirname(__file__), "examplefiles", "HUS", "7_156.xlsx"
+        os.path.dirname(__file__), "examplefiles", "HUS", "7_159.xlsx"
     )
     prj, Data = import_building_from_excel(
-        prj, "HUS_7_156", 1000, PathToExcel, sheet_names=["RoomData"]
+        prj, "HUS_7_159", 1000, PathToExcel, sheet_names=["TK03_7"]
     )
 
     prj.modelica_info.current_solver = "dassl"
 
     HUS_fill(prj)
-    HUS_fill_7_156(prj)
+    HUS_fill_7_159(prj)
 
     prj.calc_all_buildings(raise_errors=True)
 
