@@ -843,7 +843,7 @@ def HUS_fill(prj):
         "input",
         "inputdata",
         "weatherdata",
-        "01012020_18102020_Helsinki_Kaisaniemi.mos",
+        "FIN_Helsinki_029740_IWEC.mos",
     )
     #TODO: Update values for HUS
     #TODO: check year of construction
@@ -862,10 +862,10 @@ def HUS_fill(prj):
 def HUS_fill_7_156(prj):
     #TODO: Check with Martin temperature and humidity profile
     #TODO: check array length, 1 value per hour
-    prj.buildings[0].central_ahu.temperature_profile = 7416 * [273.15 + 18] # should be from data
-    prj.buildings[0].central_ahu.min_relative_humidity_profile = 7416 * [0] # should be from data
-    prj.buildings[0].central_ahu.max_relative_humidity_profile = 7416 * [1] # should be from data
-    prj.buildings[0].central_ahu.v_flow_profile = 7416 * [1] # should be from data
+    prj.buildings[0].central_ahu.temperature_profile = 8760 * [273.15 + 18] # should be from data
+    prj.buildings[0].central_ahu.min_relative_humidity_profile = 8760 * [0] # should be from data
+    prj.buildings[0].central_ahu.max_relative_humidity_profile = 8760 * [1] # should be from data
+    prj.buildings[0].central_ahu.v_flow_profile = 8760 * [1] # should be from data
 if __name__ == "__main__":
     result_folder = "HUS_Example"
     result_path = os.path.join(os.path.dirname(__file__), result_folder)
@@ -876,7 +876,7 @@ if __name__ == "__main__":
 
     prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
     prj.modelica_info.start_time = 0  # start time for simulation
-    prj.modelica_info.stop_time = 26694000 # end time for simulation
+    prj.modelica_info.stop_time = 31536000 # end time for simulation
 
     #TODO: Data Zoning in Excel
     PathToExcel = os.path.join(
