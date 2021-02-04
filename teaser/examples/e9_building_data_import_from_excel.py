@@ -768,14 +768,14 @@ class Building_FillingData():
             "",
         )
         self.bldg.year_of_construction = 1000 # just to import the correct building elements
-        self.bldg.with_ahu = True  # geprüft
-        self.bldg.central_ahu.heat_recovery = True  # geprüft
-        self.bldg.central_ahu.efficiency_recovery = 0.55  # BMS Momentaufnahme
+        self.bldg.with_ahu = True  # geprüft (aus Paper)
+        self.bldg.central_ahu.heat_recovery = True  # geprüft (aus Paper)
+        self.bldg.central_ahu.efficiency_recovery = 0.55  # geprüft (aus Paper)
         self.bldg.central_ahu.efficiency_recovery_false = 0.0  # Kreislaufverbundsystem aber Kanäle liegen direkt aneinander
-        self.bldg.central_ahu.efficiency_fan_supply = 0.7 # estimated
-        self.bldg.central_ahu.efficiency_fan_return = 0.7 # estimated
-        self.bldg.central_ahu.pressure_drop_fan_supply = 300 # BMS Momentaufnahme
-        self.bldg.central_ahu.pressure_drop_fan_return = 300 # BMS Momentaufnahme
+        self.bldg.central_ahu.efficiency_fan_supply = 0.7 # geprüft (aus Paper)
+        self.bldg.central_ahu.efficiency_fan_return = 0.7 # geprüft (aus Paper)
+        self.bldg.central_ahu.pressure_drop_fan_supply = 300 # geprüft (aus Paper)
+        self.bldg.central_ahu.pressure_drop_fan_return = 300 # geprüft (aus Paper)
 
         # Ceiling = HUS_VP01_plusEstimatedSuspension
         # InnerWall_ = HUS_VS02
@@ -848,21 +848,21 @@ def HUS_fill(prj):
     #TODO: Update values for HUS
     #TODO: check year of construction
     prj.buildings[0].year_of_construction = 1000  # just to import the correct building elements
-    prj.buildings[0].with_ahu = True  # geprüft
-    prj.buildings[0].central_ahu.heat_recovery = True  # geprüft
-    prj.buildings[0].central_ahu.efficiency_recovery = 0.55  # BMS Momentaufnahme
+    prj.buildings[0].with_ahu = True  # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.heat_recovery = True  # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.efficiency_recovery = 0.55  # geprüft (aus Paper)
     prj.buildings[0].central_ahu.efficiency_recovery_false = 0.0  # Kreislaufverbundsystem aber Kanäle liegen direkt aneinander
-    prj.buildings[0].central_ahu.efficiency_fan_supply = 0.7  # estimated
-    prj.buildings[0].central_ahu.efficiency_fan_return = 0.7  # estimated
-    prj.buildings[0].central_ahu.pressure_drop_fan_supply = 300 # BMS Momentaufnahme
-    prj.buildings[0].central_ahu.pressure_drop_fan_return = 300  # BMS Momentaufnahme
-    prj.buildings[0].central_ahu.dehumidification = False  # geprüft
-    prj.buildings[0].central_ahu.humidification = False # geprüft
+    prj.buildings[0].central_ahu.efficiency_fan_supply = 0.7  # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.efficiency_fan_return = 0.7  # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.pressure_drop_fan_supply = 300 # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.pressure_drop_fan_return = 300  # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.dehumidification = False  # geprüft (aus Paper)
+    prj.buildings[0].central_ahu.humidification = False # geprüft (aus Paper)
 
 def HUS_fill_7_159(prj):
     #TODO: Check with Martin temperature and humidity profile
     #TODO: check array length, 1 value per hour
-    prj.buildings[0].central_ahu.temperature_profile = 8760 * [273.15 + 18] # should be from data
+    prj.buildings[0].central_ahu.temperature_profile = 8760 * [273.15 + 21.5] # should be from data
     prj.buildings[0].central_ahu.min_relative_humidity_profile = 8760 * [0] # should be from data
     prj.buildings[0].central_ahu.max_relative_humidity_profile = 8760 * [1] # should be from data
     prj.buildings[0].central_ahu.v_flow_profile = 8760 * [1] # should be from data
