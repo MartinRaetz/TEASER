@@ -758,7 +758,6 @@ class Building_FillingData():
         self.bldg.central_ahu.v_flow_profile = 25 * [1]  # should be from data
 
     def hus(self):
-        #todo: json anpassen, room setpoints, minmaxAHU?,
         self.prj.weather_file_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "data",
@@ -843,10 +842,8 @@ def HUS_fill(prj):
         "input",
         "inputdata",
         "weatherdata",
-        "FIN_Helsinki_029740_IWEC.mos",
+        "01012020_18102020_Helsinki_Kaisaniemi.mos",
     )
-    #TODO: Update values for HUS
-    #TODO: check year of construction
     prj.buildings[0].year_of_construction = 1000  # just to import the correct building elements
     prj.buildings[0].with_ahu = True  # geprüft (aus Paper)
     prj.buildings[0].central_ahu.heat_recovery = True  # geprüft (aus Paper)
@@ -860,12 +857,10 @@ def HUS_fill(prj):
     prj.buildings[0].central_ahu.humidification = False # geprüft (aus Paper)
 
 def HUS_fill_7_159(prj):
-    #TODO: Check with Martin temperature and humidity profile
-    #TODO: check array length, 1 value per hour
-    prj.buildings[0].central_ahu.temperature_profile = 8760 * [273.15 + 21.5] # should be from data
-    prj.buildings[0].central_ahu.min_relative_humidity_profile = 8760 * [0] # should be from data
-    prj.buildings[0].central_ahu.max_relative_humidity_profile = 8760 * [1] # should be from data
-    prj.buildings[0].central_ahu.v_flow_profile = 8760 * [1] # should be from data
+    prj.buildings[0].central_ahu.temperature_profile = 8784 * [273.15 + 21.5] # should be from data
+    prj.buildings[0].central_ahu.min_relative_humidity_profile = 8784 * [0] # should be from data
+    prj.buildings[0].central_ahu.max_relative_humidity_profile = 8784 * [1] # should be from data
+    prj.buildings[0].central_ahu.v_flow_profile = 8784 * [1] # should be from data
 if __name__ == "__main__":
     result_folder = "HUS_Example"
     result_path = os.path.join(os.path.dirname(__file__), result_folder)
@@ -876,9 +871,8 @@ if __name__ == "__main__":
 
     prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
     prj.modelica_info.start_time = 0  # start time for simulation
-    prj.modelica_info.stop_time = 31536000 # end time for simulation
+    prj.modelica_info.stop_time = 31618800 # end time for simulation
 
-    #TODO: Data Zoning in Excel
     PathToExcel = os.path.join(
         os.path.dirname(__file__), "examplefiles", "HUS", "7_159.xlsx"
     )
