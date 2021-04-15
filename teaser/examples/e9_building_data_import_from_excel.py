@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
- @Author: Martin Raetz
+# @Author: Martin Raetz
 # @Date:   2019-02-19 18:41:56
 # @Last Modified by: Martin Rätz
 # @Last Modified time: 29.11.2019
