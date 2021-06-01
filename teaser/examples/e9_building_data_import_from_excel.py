@@ -382,7 +382,7 @@ def zoning_HUS(data):
         "WC": "WC and sanitary rooms in non-residential buildings",
         "Storage": "Stock, technical equipment, archives",
         "Lounge": "Meeting, Conference, seminar",
-        "Office": "Meeting, Conference, seminar",
+        "Office": "HUS_3_049",
         "Treatment room": "Examination- or treatment room",
         "StorageChemical": "Stock, technical equipment, archives",
         "EquipmentServiceAndRinse": "WC and sanitary rooms in non-residential buildings",
@@ -868,12 +868,25 @@ def HUS_fill_7_156(prj):
     prj.buildings[0].central_ahu.min_relative_humidity_profile = 8784 * [0]  # should be from data
     prj.buildings[0].central_ahu.max_relative_humidity_profile = 8784 * [1]  # should be from data
     prj.buildings[0].central_ahu.v_flow_profile = 8784 * [1]  # should be from data
+
+def HUS_fill_3_032(prj):
+    prj.buildings[0].central_ahu.temperature_profile = 8784 * [273.15 + 21.5] # should be from data
+    prj.buildings[0].central_ahu.min_relative_humidity_profile = 8784 * [0]  # should be from data
+    prj.buildings[0].central_ahu.max_relative_humidity_profile = 8784 * [1]  # should be from data
+    prj.buildings[0].central_ahu.v_flow_profile = 8784 * [1]  # should be from data
+
+def HUS_fill_3_049(prj):
+    prj.buildings[0].central_ahu.temperature_profile = 8784 * [273.15 + 21.5]  # should be from data
+    prj.buildings[0].central_ahu.min_relative_humidity_profile = 8784 * [0]  # should be from data
+    prj.buildings[0].central_ahu.max_relative_humidity_profile = 8784 * [1]  # should be from data
+    prj.buildings[0].central_ahu.v_flow_profile = 8784 * [1]  # should be from data
+
 if __name__ == "__main__":
     result_folder = "HUS_Example"
     result_path = os.path.join(os.path.dirname(__file__), result_folder)
 
     prj = Project(load_data=True)
-    prj.name = "PatientRoom_7_159"
+    prj.name = "Room_3_049"
     prj.data.load_uc_binding()
 
     prj.modelica_info.weekday = 2  # 0-Monday, 6-Sunday
@@ -881,16 +894,16 @@ if __name__ == "__main__":
     prj.modelica_info.stop_time = 31618800 # end time for simulation
 
     PathToExcel = os.path.join(
-        os.path.dirname(__file__), "examplefiles", "HUS", "7_159_PatientRoomOnly.xlsx"
+        os.path.dirname(__file__), "examplefiles", "HUS", "3_049.xlsx"
     )
     prj, Data = import_building_from_excel(
-        prj, "HUS_7_159", 1000, PathToExcel, sheet_names=["TK03_7"]
+        prj, "HUS_3_049", 1000, PathToExcel, sheet_names=["TK02_3"]
     )
 
     prj.modelica_info.current_solver = "dassl"
 
     HUS_fill(prj)
-    HUS_fill_7_159(prj)
+    HUS_fill_3_049(prj)
 
     prj.calc_all_buildings(raise_errors=True)
 
